@@ -1,0 +1,55 @@
+openapi: 3.1.0
+info:
+  title: Platform Lab Web BFF
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /healthz:
+    get:
+      responses:
+        '200': { description: Healthy }
+  /readyz:
+    get:
+      responses:
+        '200': { description: Downstream services ready }
+        '503': { description: A downstream service is unavailable }
+  /api/products:
+    get:
+      responses:
+        '200': { description: Product collection }
+  /api/products/{id}:
+    get:
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Product }
+  /api/cart:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/CustomerID'
+      responses:
+        '200': { description: Customer cart }
+    delete:
+      parameters:
+        - $ref: '#/components/parameters/CustomerID'
+      responses:
+        '204': { description: Cart cleared }
+  /api/orders:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/CustomerID'
+      responses:
+        '200': { description: Customer orders }
+    post:
+      parameters:
+        - $ref: '#/components/parameters/CustomerID'
+      responses:
+        '201': { description: Order created }
+components:
+  parameters:
+    CustomerID:
+      name: X-Customer-ID
+      in: header
+      required: true
+      schema: { type: string }

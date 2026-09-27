@@ -1,0 +1,15 @@
+{
+  "eventId": "ord-example-created-inventory-payment-order-inventory-release",
+  "eventType": "inventory.released",
+  "eventVersion": 1,
+  "occurredAt": "2026-09-01T00:00:04Z",
+  "aggregateId": "ord-example",
+  "causationId": "ord-example-created-inventory-payment-order",
+  "payload": {
+    "orderId": "ord-example",
+    "items": [
+      { "productId": "prod-001", "quantity": 1, "unitPriceCents": 0 }
+    ],
+    "reason": "simulated authorization limit exceeded"
+  }
+}

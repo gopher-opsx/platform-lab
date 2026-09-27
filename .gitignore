@@ -1,0 +1,58 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Go
+bin/
+dist/
+coverage.out
+*.test
+
+# Node / Angular
+node_modules/
+.angular/
+coverage/
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Docker
+docker-data/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+*.tfvars
+!*.tfvars.example
+!platform/terraform/environments/training/stages/*.tfvars
+*.tfbackend
+!*.tfbackend.example
+
+# Course-local release metadata
+platform/images/release.env
+release-manifest.json
+
+# Temporary files
+tmp/
+temp/
+external-assets/
+
+# Course helper runtime files
+.course/
+
+# Generated Terraform release inputs
+*.auto.tfvars.json

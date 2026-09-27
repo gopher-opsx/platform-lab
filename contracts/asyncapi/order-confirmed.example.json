@@ -1,0 +1,12 @@
+{
+  "eventId": "ord-example-created-inventory-payment-order",
+  "eventType": "order.confirmed",
+  "eventVersion": 1,
+  "occurredAt": "2026-09-01T00:00:03Z",
+  "aggregateId": "ord-example",
+  "causationId": "ord-example-created-inventory-payment",
+  "payload": {
+    "orderId": "ord-example",
+    "paymentId": "pay-example"
+  }
+}

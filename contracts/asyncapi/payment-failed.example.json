@@ -1,0 +1,15 @@
+{
+  "eventId": "ord-example-created-inventory-payment",
+  "eventType": "payment.failed",
+  "eventVersion": 1,
+  "occurredAt": "2026-09-01T00:00:02Z",
+  "aggregateId": "ord-example",
+  "causationId": "ord-example-created-inventory",
+  "payload": {
+    "orderId": "ord-example",
+    "paymentId": "pay-example",
+    "amountCents": 679600,
+    "currency": "USD",
+    "reason": "simulated authorization limit exceeded: amount=679600 limit=500000"
+  }
+}

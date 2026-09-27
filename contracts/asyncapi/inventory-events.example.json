@@ -1,0 +1,12 @@
+{
+  "reserved": {
+    "eventType": "inventory.reserved",
+    "aggregateId": "ord-example",
+    "payload": {"orderId": "ord-example", "items": [{"productId": "prod-001", "quantity": 2, "unitPriceCents": 169900}]}
+  },
+  "rejected": {
+    "eventType": "inventory.rejected",
+    "aggregateId": "ord-example",
+    "payload": {"orderId": "ord-example", "reason": "insufficient inventory"}
+  }
+}

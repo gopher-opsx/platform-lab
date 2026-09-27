@@ -1,0 +1,11 @@
+{
+  "notificationId": "ord-example-created-inventory-payment-order-notification",
+  "orderId": "ord-example",
+  "sourceEventId": "ord-example-created-inventory-payment-order",
+  "sourceEventType": "order.confirmed",
+  "channel": "email",
+  "recipient": "customer:ord-example",
+  "status": "delivered",
+  "provider": "simulated",
+  "deliveredAt": "2026-09-01T00:00:04Z"
+}

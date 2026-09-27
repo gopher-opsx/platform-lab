@@ -1,0 +1,5 @@
+import {provideHttpClient} from '@angular/common/http';
+import {HttpTestingController,provideHttpClientTesting} from '@angular/common/http/testing';
+import {TestBed} from '@angular/core/testing';
+import {App} from './app';
+describe('App',()=>{afterEach(()=>TestBed.inject(HttpTestingController).verify());it('loads catalog and cart',async()=>{await TestBed.configureTestingModule({imports:[App],providers:[provideHttpClient(),provideHttpClientTesting()]}).compileComponents();const fixture=TestBed.createComponent(App);fixture.detectChanges();const http=TestBed.inject(HttpTestingController);http.expectOne('/api/products').flush([{id:'prod-001',name:'CloudBook',description:'Laptop',priceCents:1000,currency:'USD',imageUrl:'',inStock:true}]);const cart=http.expectOne('/api/cart');expect(cart.request.headers.get('X-Customer-ID')).toBe('customer-storefront-demo');cart.flush({customerId:'customer-storefront-demo',items:[]});await fixture.whenStable();expect(fixture.nativeElement.querySelector('h3')?.textContent).toContain('CloudBook')})});

@@ -1,0 +1,25 @@
+{
+  "eventId": "ord-example-created",
+  "eventType": "order.created",
+  "eventVersion": 1,
+  "occurredAt": "2026-08-31T00:00:00Z",
+  "aggregateId": "ord-example",
+  "payload": {
+    "orderId": "ord-example",
+    "customerId": "customer-001",
+    "currency": "USD",
+    "totalCents": 359700,
+    "items": [
+      {
+        "productId": "prod-001",
+        "quantity": 2,
+        "unitPriceCents": 169900
+      },
+      {
+        "productId": "prod-003",
+        "quantity": 1,
+        "unitPriceCents": 19900
+      }
+    ]
+  }
+}
