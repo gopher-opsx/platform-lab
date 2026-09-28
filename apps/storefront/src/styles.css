@@ -1,2 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&display=swap');
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#fbfdfb;font-family:'DM Sans',system-ui,sans-serif}button{font:inherit}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: #080c11; color: #edf4f0; font-family: var(--font-sans); }
+  button, a { font: inherit; }
+}

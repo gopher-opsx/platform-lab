@@ -49,7 +49,7 @@ release-manifest.json
 # Temporary files
 tmp/
 temp/
-external-assets/
+external/
 
 # Course helper runtime files
 .course/
