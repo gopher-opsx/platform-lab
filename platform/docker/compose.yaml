@@ -94,6 +94,7 @@ services:
       DATABASE_URL: postgres://platform:platform@postgres:5432/catalog_db?sslmode=disable
     ports: ["8081:8081"]
     depends_on:
+      postgres: { condition: service_healthy }
       postgres-bootstrap: { condition: service_completed_successfully }
     healthcheck: &go-health
       test: ["CMD", "wget", "-qO-", "http://localhost:8081/healthz"]
@@ -228,3 +229,7 @@ services:
 volumes:
   postgres-data:
   redis-data:
+
+networks:
+  default:
+    name: platform-lab-network

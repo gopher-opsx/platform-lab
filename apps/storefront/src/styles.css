@@ -1,13 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+  "Segoe UI", sans-serif;
+
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco,
+  Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 @layer base {
-  html { scroll-behavior: smooth; }
-  body { margin: 0; background: #080c11; color: #edf4f0; font-family: var(--font-sans); }
-  button, a { font: inherit; }
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background: #080c11;
+    color: #edf4f0;
+    font-family: var(--font-sans);
+  }
+
+  button,
+  a {
+    font: inherit;
+  }
 }
