@@ -71,6 +71,25 @@ func (s *PaymentEventService) HandleEvent(
 		}
 		return err
 
+	case domain.InventoryRejectedEventType:
+		var payload domain.InventoryRejectedPayload
+		if err := json.Unmarshal(envelope.Payload, &payload); err != nil {
+			return fmt.Errorf("decode inventory.rejected payload: %w", err)
+		}
+		err := s.orders.ApplyPaymentEvent(
+			ctx,
+			envelope,
+			payload.OrderID,
+			"",
+			domain.OrderStatusCancelled,
+			payload.Reason,
+			s.ordersTopic,
+		)
+		if err == nil {
+			metrics.IncBusiness("platform_lab_orders_cancelled_total")
+		}
+		return err
+
 	default:
 		return ErrUnsupportedPaymentEvent
 	}

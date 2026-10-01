@@ -47,34 +47,35 @@ func (c *PaymentConsumer) Run(ctx context.Context) {
 			if errors.Is(err, context.Canceled) {
 				return
 			}
-			log.Printf("order payment consumer: fetch failed: %v", err)
+			log.Printf("order event consumer: fetch failed: %v", err)
 			continue
 		}
 
 		var envelope domain.EventEnvelope
 		if err := json.Unmarshal(message.Value, &envelope); err != nil {
-			log.Printf("order payment consumer: malformed event: %v", err)
+			log.Printf("order event consumer: malformed event: %v", err)
 			_ = c.reader.CommitMessages(ctx, message)
 			continue
 		}
 
 		if envelope.EventType != domain.PaymentAuthorizedEventType &&
-			envelope.EventType != domain.PaymentFailedEventType {
+			envelope.EventType != domain.PaymentFailedEventType &&
+			envelope.EventType != domain.InventoryRejectedEventType {
 			_ = c.reader.CommitMessages(ctx, message)
 			continue
 		}
 
 		if err := c.handler.HandleEvent(ctx, envelope); err != nil {
-			log.Printf("order payment consumer: process %s failed: %v", envelope.EventID, err)
+			log.Printf("order event consumer: process %s failed: %v", envelope.EventID, err)
 			continue
 		}
 
 		if err := c.reader.CommitMessages(ctx, message); err != nil {
-			log.Printf("order payment consumer: commit %s failed: %v", envelope.EventID, err)
+			log.Printf("order event consumer: commit %s failed: %v", envelope.EventID, err)
 			continue
 		}
 
-		log.Printf("order payment consumer: processed %s", envelope.EventID)
+		log.Printf("order event consumer: processed %s", envelope.EventID)
 	}
 }
 

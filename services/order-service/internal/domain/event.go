@@ -11,6 +11,7 @@ const (
 	OrderCancelledEventType    = "order.cancelled"
 	PaymentAuthorizedEventType = "payment.authorized"
 	PaymentFailedEventType     = "payment.failed"
+	InventoryRejectedEventType = "inventory.rejected"
 )
 
 type EventEnvelope struct {
@@ -46,6 +47,11 @@ type PaymentFailedPayload struct {
 	AmountCents int64  `json:"amountCents"`
 	Currency    string `json:"currency"`
 	Reason      string `json:"reason"`
+}
+
+type InventoryRejectedPayload struct {
+	OrderID string `json:"orderId"`
+	Reason  string `json:"reason"`
 }
 
 type OrderConfirmedPayload struct {

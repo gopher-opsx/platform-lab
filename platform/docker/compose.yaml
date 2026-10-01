@@ -125,7 +125,9 @@ services:
       KAFKA_BROKERS: kafka:29092
       ORDERS_TOPIC: orders
       PAYMENTS_TOPIC: payments
+      INVENTORY_TOPIC: inventory
       PAYMENTS_CONSUMER_GROUP: order-service-payments
+      INVENTORY_CONSUMER_GROUP: order-service-inventory
     ports: ["8083:8083"]
     depends_on:
       postgres-bootstrap: { condition: service_completed_successfully }

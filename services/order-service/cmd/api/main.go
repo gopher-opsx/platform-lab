@@ -63,8 +63,17 @@ func main() {
 	)
 	defer paymentConsumer.Close()
 
+	inventoryConsumer := kafkainfra.NewPaymentConsumer(
+		cfg.KafkaBrokers,
+		cfg.InventoryTopic,
+		cfg.InventoryConsumerGroup,
+		paymentEventService,
+	)
+	defer inventoryConsumer.Close()
+
 	go outboxPublisher.Run(ctx)
 	go paymentConsumer.Run(ctx)
+	go inventoryConsumer.Run(ctx)
 
 	mux := http.NewServeMux()
 	metricCollector := metrics.New("order-service")

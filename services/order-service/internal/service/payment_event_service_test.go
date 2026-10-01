@@ -94,3 +94,35 @@ func TestPaymentFailedCancelsOrder(t *testing.T) {
 		t.Fatalf("expected declined reason, got %s", repo.reason)
 	}
 }
+
+func TestInventoryRejectedCancelsOrder(t *testing.T) {
+	payload, _ := json.Marshal(domain.InventoryRejectedPayload{
+		OrderID: "ord-003",
+		Reason:  "insufficient inventory for product prod-001: requested=99 available=10",
+	})
+
+	repo := &paymentEventRepo{}
+	svc := NewPaymentEventService(repo, "orders")
+
+	err := svc.HandleEvent(context.Background(), domain.EventEnvelope{
+		EventID:   "evt-inventory-003",
+		EventType: domain.InventoryRejectedEventType,
+		Payload:   payload,
+	})
+	if err != nil {
+		t.Fatalf("HandleEvent() error = %v", err)
+	}
+
+	if repo.status != domain.OrderStatusCancelled {
+		t.Fatalf("expected cancelled, got %s", repo.status)
+	}
+	if repo.orderID != "ord-003" {
+		t.Fatalf("expected order ord-003, got %s", repo.orderID)
+	}
+	if repo.paymentID != "" {
+		t.Fatalf("expected empty payment ID, got %s", repo.paymentID)
+	}
+	if repo.reason == "" {
+		t.Fatal("expected inventory rejection reason to be preserved")
+	}
+}
