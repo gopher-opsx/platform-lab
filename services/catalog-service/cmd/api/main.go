@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/gopher-opsx/platform-lab/services/catalog-service/internal/config"
 	"github.com/gopher-opsx/platform-lab/services/catalog-service/internal/infrastructure/postgres"
@@ -59,6 +61,9 @@ func main() {
 	productListHandler := http.HandlerFunc(catalogHandler.ListProducts)
 	if os.Getenv("PLATFORM_LAB_DISK_GROWTH") == "true" {
 		productListHandler = withLabDiskGrowth(productListHandler)
+	}
+	if os.Getenv("PLATFORM_LAB_CPU_PRESSURE") == "true" {
+		productListHandler = withLabCPUPressure(productListHandler)
 	}
 
 	mux.Handle("GET /products", productListHandler)
@@ -117,5 +122,24 @@ func withLabDiskGrowth(next http.Handler) http.HandlerFunc {
 		if _, err := f.Write(payload); err != nil {
 			log.Printf("lab disk-growth: append growth file: %v", err)
 		}
+	}
+}
+
+
+const labCPUPressureDuration = 500 * time.Millisecond
+
+// withLabCPUPressure is a dormant training-only fault hook for Lesson 39.
+// When armed, each controlled product-list request performs bounded CPU work
+// before the normal Catalog handler runs. This creates a workload -> process ->
+// CPU -> latency relationship, and CPU falls when the workload stops.
+func withLabCPUPressure(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deadline := time.Now().Add(labCPUPressureDuration)
+		sum := sha256.Sum256([]byte(r.URL.Path))
+		for time.Now().Before(deadline) {
+			sum = sha256.Sum256(sum[:])
+		}
+		log.Printf("lab cpu-pressure: completed bounded expensive processing for %s checksum=%x", r.URL.Path, sum[:4])
+		next.ServeHTTP(w, r)
 	}
 }
