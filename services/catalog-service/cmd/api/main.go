@@ -59,11 +59,17 @@ func main() {
 	})
 
 	productListHandler := http.HandlerFunc(catalogHandler.ListProducts)
+
 	if os.Getenv("PLATFORM_LAB_DISK_GROWTH") == "true" {
 		productListHandler = withLabDiskGrowth(productListHandler)
 	}
+
 	if os.Getenv("PLATFORM_LAB_CPU_PRESSURE") == "true" {
 		productListHandler = withLabCPUPressure(productListHandler)
+	}
+
+	if os.Getenv("PLATFORM_LAB_MEMORY_GROWTH") == "true" {
+		productListHandler = withLabMemoryGrowth(productListHandler)
 	}
 
 	mux.Handle("GET /products", productListHandler)
@@ -108,11 +114,16 @@ func withLabDiskGrowth(next http.Handler) http.HandlerFunc {
 			log.Printf("lab disk-growth: inspect growth file: %v", err)
 			return
 		}
+
 		if err == nil && info.Size() >= labDiskGrowthMaximumSize {
 			return
 		}
 
-		f, err := os.OpenFile(labDiskGrowthFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+		f, err := os.OpenFile(
+			labDiskGrowthFile,
+			os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+			0o644,
+		)
 		if err != nil {
 			log.Printf("lab disk-growth: open growth file: %v", err)
 			return
@@ -125,7 +136,6 @@ func withLabDiskGrowth(next http.Handler) http.HandlerFunc {
 	}
 }
 
-
 const labCPUPressureDuration = 500 * time.Millisecond
 
 // withLabCPUPressure is a dormant training-only fault hook for Lesson 39.
@@ -136,10 +146,75 @@ func withLabCPUPressure(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		deadline := time.Now().Add(labCPUPressureDuration)
 		sum := sha256.Sum256([]byte(r.URL.Path))
+
 		for time.Now().Before(deadline) {
 			sum = sha256.Sum256(sum[:])
 		}
-		log.Printf("lab cpu-pressure: completed bounded expensive processing for %s checksum=%x", r.URL.Path, sum[:4])
+
+		log.Printf(
+			"lab cpu-pressure: completed bounded expensive processing for %s checksum=%x",
+			r.URL.Path,
+			sum[:4],
+		)
+
 		next.ServeHTTP(w, r)
+	}
+}
+
+const (
+	labMemoryGrowthBytes       = 512 * 1024
+	labMemoryGrowthMaximumSize = 128 * 1024 * 1024
+)
+
+var (
+	labMemoryGrowthMu       sync.Mutex
+	labMemoryGrowthRetained [][]byte
+	labMemoryGrowthTotal    int
+)
+
+// withLabMemoryGrowth is a dormant training-only fault hook for Lesson 40.
+// Each controlled product-list request retains a bounded block of memory.
+// Because references to those blocks remain reachable, the Go garbage
+// collector cannot reclaim them. Repeated workload therefore produces
+// observable retained-memory growth while the Catalog service remains healthy.
+// The hard cap keeps the local training scenario safe.
+func withLabMemoryGrowth(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
+
+		labMemoryGrowthMu.Lock()
+		defer labMemoryGrowthMu.Unlock()
+
+		if labMemoryGrowthTotal >= labMemoryGrowthMaximumSize {
+			return
+		}
+
+		remaining := labMemoryGrowthMaximumSize - labMemoryGrowthTotal
+		allocationSize := labMemoryGrowthBytes
+
+		if remaining < allocationSize {
+			allocationSize = remaining
+		}
+
+		block := make([]byte, allocationSize)
+
+		// Touch every page so the allocation becomes observable as real
+		// resident memory instead of remaining only virtually allocated.
+		for i := 0; i < len(block); i += 4096 {
+			block[i] = byte((labMemoryGrowthTotal + i) % 251)
+		}
+
+		labMemoryGrowthRetained = append(
+			labMemoryGrowthRetained,
+			block,
+		)
+
+		labMemoryGrowthTotal += len(block)
+
+		log.Printf(
+			"lab memory-growth: retained %d KiB; total retained=%d MiB",
+			len(block)/1024,
+			labMemoryGrowthTotal/(1024*1024),
+		)
 	}
 }
