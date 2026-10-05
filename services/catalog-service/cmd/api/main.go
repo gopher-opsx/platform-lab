@@ -72,6 +72,10 @@ func main() {
 		productListHandler = withLabMemoryGrowth(productListHandler)
 	}
 
+	if os.Getenv("PLATFORM_LAB_OOM_PRESSURE") == "true" {
+		productListHandler = withLabOOMPressure(productListHandler)
+	}
+
 	mux.Handle("GET /products", productListHandler)
 	mux.HandleFunc("GET /products/{id}", catalogHandler.GetProduct)
 
@@ -215,6 +219,48 @@ func withLabMemoryGrowth(next http.Handler) http.HandlerFunc {
 			"lab memory-growth: retained %d KiB; total retained=%d MiB",
 			len(block)/1024,
 			labMemoryGrowthTotal/(1024*1024),
+		)
+	}
+}
+
+const labOOMPressureBlockSize = 8 * 1024 * 1024
+
+var (
+	labOOMPressureMu       sync.Mutex
+	labOOMPressureRetained [][]byte
+)
+
+// withLabOOMPressure is a dormant training-only fault hook for Lesson 41.
+// Each controlled product-list request retains and touches a large memory
+// block. When the Lab CLI applies a container memory limit, repeated workload
+// eventually crosses that real limit and the process is OOM killed.
+//
+// This hook is inactive during normal Platform Lab operation and is enabled
+// only when PLATFORM_LAB_OOM_PRESSURE=true.
+func withLabOOMPressure(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
+
+		labOOMPressureMu.Lock()
+		defer labOOMPressureMu.Unlock()
+
+		block := make([]byte, labOOMPressureBlockSize)
+
+		// Touch every page so the allocation becomes resident memory and
+		// contributes to the container's real memory usage.
+		for i := 0; i < len(block); i += 4096 {
+			block[i] = byte(i % 251)
+		}
+
+		labOOMPressureRetained = append(
+			labOOMPressureRetained,
+			block,
+		)
+
+		log.Printf(
+			"lab oom-pressure: retained another %d MiB; blocks=%d",
+			labOOMPressureBlockSize/(1024*1024),
+			len(labOOMPressureRetained),
 		)
 	}
 }
