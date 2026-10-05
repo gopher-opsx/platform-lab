@@ -223,7 +223,7 @@ func withLabMemoryGrowth(next http.Handler) http.HandlerFunc {
 	}
 }
 
-const labOOMPressureBlockSize = 8 * 1024 * 1024
+const labOOMPressureBlockSize = 4 * 1024 * 1024
 
 var (
 	labOOMPressureMu       sync.Mutex
@@ -231,11 +231,11 @@ var (
 )
 
 // withLabOOMPressure is a dormant training-only fault hook for Lesson 41.
-// Each controlled product-list request retains and touches a large memory
-// block. When the Lab CLI applies a container memory limit, repeated workload
-// eventually crosses that real limit and the process is OOM killed.
+// A controlled product-list request starts sustained retained-memory pressure.
+// The Lab CLI places Catalog inside a strict container memory limit, so the
+// process eventually crosses that real cgroup boundary and is OOM killed.
 //
-// This hook is inactive during normal Platform Lab operation and is enabled
+// This behavior is inactive during normal Platform Lab operation and is enabled
 // only when PLATFORM_LAB_OOM_PRESSURE=true.
 func withLabOOMPressure(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -244,23 +244,29 @@ func withLabOOMPressure(next http.Handler) http.HandlerFunc {
 		labOOMPressureMu.Lock()
 		defer labOOMPressureMu.Unlock()
 
-		block := make([]byte, labOOMPressureBlockSize)
+		log.Printf("lab oom-pressure: controlled memory pressure started")
 
-		// Touch every page so the allocation becomes resident memory and
-		// contributes to the container's real memory usage.
-		for i := 0; i < len(block); i += 4096 {
-			block[i] = byte(i % 251)
+		for {
+			block := make([]byte, labOOMPressureBlockSize)
+
+			// Touch every page so the allocation becomes resident memory and
+			// contributes to the container's real cgroup memory usage.
+			for i := 0; i < len(block); i += 4096 {
+				block[i] = byte((len(labOOMPressureRetained) + i) % 251)
+			}
+
+			labOOMPressureRetained = append(
+				labOOMPressureRetained,
+				block,
+			)
+
+			log.Printf(
+				"lab oom-pressure: retained another %d MiB; total=%d MiB",
+				labOOMPressureBlockSize/(1024*1024),
+				(len(labOOMPressureRetained)*labOOMPressureBlockSize)/(1024*1024),
+			)
+
+			time.Sleep(100 * time.Millisecond)
 		}
-
-		labOOMPressureRetained = append(
-			labOOMPressureRetained,
-			block,
-		)
-
-		log.Printf(
-			"lab oom-pressure: retained another %d MiB; blocks=%d",
-			labOOMPressureBlockSize/(1024*1024),
-			len(labOOMPressureRetained),
-		)
 	}
 }
