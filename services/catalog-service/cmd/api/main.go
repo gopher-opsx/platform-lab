@@ -76,6 +76,10 @@ func main() {
 		productListHandler = withLabOOMPressure(productListHandler)
 	}
 
+	if os.Getenv("PLATFORM_LAB_SLOW_DEPENDENCY") == "true" {
+		productListHandler = withLabSlowDependency(productListHandler)
+	}
+
 	mux.Handle("GET /products", productListHandler)
 	mux.HandleFunc("GET /products/{id}", catalogHandler.GetProduct)
 
@@ -268,5 +272,29 @@ func withLabOOMPressure(next http.Handler) http.HandlerFunc {
 
 			time.Sleep(100 * time.Millisecond)
 		}
+	}
+}
+
+const labSlowDependencyDelay = 2 * time.Second
+
+// withLabSlowDependency is a dormant training-only fault hook for Lesson 42.
+//
+// It simulates time spent waiting on a slow downstream dependency.
+// Unlike the CPU-pressure scenario, this intentionally performs no expensive
+// computation. The request spends time waiting, so latency rises while CPU
+// utilization remains relatively low.
+//
+// The hook is inactive during normal Platform Lab operation and is enabled
+// only when PLATFORM_LAB_SLOW_DEPENDENCY=true.
+func withLabSlowDependency(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf(
+			"lab slow-dependency: waiting %s before continuing product request",
+			labSlowDependencyDelay,
+		)
+
+		time.Sleep(labSlowDependencyDelay)
+
+		next.ServeHTTP(w, r)
 	}
 }
